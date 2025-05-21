@@ -45,6 +45,10 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/string.hpp>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+
 namespace {
 Sophus::SE3d LookupTransform(const std::string &target_frame,
                              const std::string &source_frame,
@@ -110,6 +114,13 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
         "pointcloud_topic", rclcpp::SensorDataQoS(),
         std::bind(&OdometryServer::RegisterFrame, this, std::placeholders::_1));
 
+    pose_sub_.subscribe(this, "/gnss_pose");
+    cloud_sub_.subscribe(this, "pointcloud_topic");
+
+    sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(5000), pose_sub_, cloud_sub_);
+    sync_->registerCallback(std::bind(&OdometryServer::syncCallback, this, std::placeholders::_1, std::placeholders::_2));
+
+
     // Initialize publishers
     rclcpp::QoS qos((rclcpp::SystemDefaultsQoS().keep_last(1).durability_volatile()));
     odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>("kiss/odometry", qos);
@@ -128,11 +139,18 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     RCLCPP_INFO(this->get_logger(), "KISS-ICP ROS 2 odometry node initialized");
 }
 
+void OdometryServer::syncCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg,
+                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg)
+    {
+        std::cout << "Received pose and point cloud message" << std::endl;
+
+    }
+
 void OdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg) {
     const auto cloud_frame_id = msg->header.frame_id;
     const auto points = PointCloud2ToEigen(msg);
-    const auto timestamps = GetTimestamps(msg);
-
+    const auto timestamps = GetTimestamps(msg); 
+    
     // Register frame, main entry point to KISS-ICP pipeline
     const auto &[frame, keypoints] = kiss_icp_->RegisterFrame(points, timestamps);
 

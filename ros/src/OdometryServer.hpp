@@ -33,8 +33,13 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>   
 #include <std_msgs/msg/header.hpp>
 #include <string>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
 
 namespace kiss_icp_ros {
 
@@ -44,9 +49,14 @@ public:
     OdometryServer() = delete;
     explicit OdometryServer(const rclcpp::NodeOptions &options);
 
+    
+
 private:
     /// Register new frame
     void RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg);
+
+    void syncCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg,
+                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg);
 
     /// Stream the estimated pose to ROS
     void PublishOdometry(const Sophus::SE3d &kiss_pose, const std_msgs::msg::Header &header);
@@ -64,6 +74,12 @@ private:
     bool invert_odom_tf_;
     bool publish_odom_tf_;
     bool publish_debug_clouds_;
+
+    using SyncPolicy = message_filters::sync_policies::ApproximateTime<geometry_msgs::msg::PoseStamped, sensor_msgs::msg::PointCloud2>;
+
+    message_filters::Subscriber<geometry_msgs::msg::PoseStamped> pose_sub_;
+    message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub_;
+    std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
 
     /// Data subscribers.
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
