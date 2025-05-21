@@ -63,7 +63,8 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
 
     # ROS configuration
-    pointcloud_topic = LaunchConfiguration("topic")
+    pointcloud_topic = LaunchConfiguration("pc_topic")
+    pose_topic = LaunchConfiguration("pose_topic")
     visualize = LaunchConfiguration("visualize", default="true")
 
     # Optional ros bag play
@@ -83,6 +84,7 @@ def generate_launch_description():
         output="screen",
         remappings=[
             ("pointcloud_topic", pointcloud_topic),
+            ("pose_topic", pose_topic),
         ],
         parameters=[
             {

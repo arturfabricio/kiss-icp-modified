@@ -114,7 +114,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
         "pointcloud_topic", rclcpp::SensorDataQoS(),
         std::bind(&OdometryServer::RegisterFrame, this, std::placeholders::_1));
 
-    pose_sub_.subscribe(this, "/gnss_pose");
+    pose_sub_.subscribe(this, "pose_topic");
     cloud_sub_.subscribe(this, "pointcloud_topic");
 
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(5000), pose_sub_, cloud_sub_);
