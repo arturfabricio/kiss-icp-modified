@@ -35,7 +35,7 @@ namespace kiss_icp::pipeline {
 
 KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
                                                     const std::vector<double> &timestamps, 
-                                                    const Eigen::Matrix4f &external_guess) {
+                                                    const Sophus::SE3d &external_guess) {
     // Preprocess the input cloud
     const auto &preprocessed_frame = preprocessor_.Preprocess(frame, timestamps, last_delta_);
 
@@ -46,9 +46,11 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     const double sigma = adaptive_threshold_.ComputeThreshold();
 
     // Compute initial_guess for ICP
-    std::cout << external_guess << std::endl;
-
     const auto initial_guess = last_pose_ * last_delta_;
+
+    // Compare initial_guess and external_guess
+    std::cout << "external_guess: " << external_guess.matrix() << std::endl;
+
 
     // Run ICP
     const auto new_pose = registration_.AlignPointsToMap(source,         // frame
