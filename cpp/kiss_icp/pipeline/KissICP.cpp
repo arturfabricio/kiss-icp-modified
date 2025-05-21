@@ -48,9 +48,25 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     // Compute initial_guess for ICP
     const auto initial_guess = last_pose_ * last_delta_;
 
-    // Compare initial_guess and external_guess
-    std::cout << "external_guess: " << external_guess.matrix() << std::endl;
+    // === Compare external_guess and initial_guess ===
+    std::cout << "\n=== External vs Initial Guess Comparison ===" << std::endl;
 
+    // Print transformation matrices
+    std::cout << "External Guess (T_ext):\n" << external_guess.matrix() << std::endl;
+    std::cout << "Initial Guess  (T_init):\n" << initial_guess.matrix() << std::endl;
+
+    // Compute relative transform: T_rel = T_init^-1 * T_ext
+    Sophus::SE3d relative_transform = initial_guess.inverse() * external_guess;
+    std::cout << "Relative Transform (T_rel = T_init^-1 * T_ext):\n" << relative_transform.matrix() << std::endl;
+
+    // Decompose the relative transform
+    Eigen::Vector3d trans_diff = relative_transform.translation();
+    Eigen::Vector3d rot_vec = relative_transform.so3().log();  // rotation vector (angle-axis)
+    double rot_angle_deg = rot_vec.norm() * (180.0 / M_PI);    // angle in degrees
+
+    std::cout << "Translation difference (T_ext - T_init) [m]:\n" << trans_diff.transpose() << std::endl;
+    std::cout << "Rotation difference angle [deg]: " << rot_angle_deg << std::endl;
+    std::cout << "Rotation axis (normalized): " << rot_vec.normalized().transpose() << "\n" << std::endl;
 
     // Run ICP
     const auto new_pose = registration_.AlignPointsToMap(source,         // frame
@@ -61,8 +77,6 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
 
     // Compute the difference between the prediction and the actual estimate
     const auto model_deviation = initial_guess.inverse() * new_pose;
-
-    // std::cout << "model_deviation: " << model_deviation.matrix() << std::endl;
 
     // Update step: threshold, local map, delta, and the last pose
     adaptive_threshold_.UpdateModelDeviation(model_deviation);
