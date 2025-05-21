@@ -142,8 +142,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
 void OdometryServer::syncCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg,
                       const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg)
     {
-        std::cout << "Received pose and point cloud message" << std::endl;
-
+        std::cout << "Received pose and point cloud message at time: " << pose_msg->header.stamp.sec << "." << pose_msg->header.stamp.nanosec << std::endl;
     }
 
 void OdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg) {
