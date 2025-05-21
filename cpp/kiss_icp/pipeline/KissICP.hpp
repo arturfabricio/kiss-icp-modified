@@ -69,7 +69,8 @@ public:
 
 public:
     Vector3dVectorTuple RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
-                                      const std::vector<double> &timestamps);
+                                      const std::vector<double> &timestamps,
+                                      const Eigen::Matrix4f &external_guess);
     Vector3dVectorTuple Voxelize(const std::vector<Eigen::Vector3d> &frame) const;
 
     std::vector<Eigen::Vector3d> LocalMap() const { return local_map_.Pointcloud(); };

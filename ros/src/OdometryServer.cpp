@@ -140,9 +140,22 @@ void OdometryServer::syncCallback(const geometry_msgs::msg::PoseStamped::ConstSh
         const auto cloud_frame_id = msg->header.frame_id;
         const auto points = PointCloud2ToEigen(msg);
         const auto timestamps = GetTimestamps(msg); 
-        
+        const auto &pose = pose_msg->pose;
+
+        Eigen::Quaternionf q(pose.orientation.w,
+                            pose.orientation.x,
+                            pose.orientation.y,
+                            pose.orientation.z);
+        Eigen::Vector3f t(pose.position.x,
+                        pose.position.y,
+                        pose.position.z);
+
+        Eigen::Matrix4f external_guess = Eigen::Matrix4f::Identity();
+        external_guess.block<3,3>(0,0) = q.toRotationMatrix();
+        external_guess.block<3,1>(0,3) = t;
+
         // Register frame, main entry point to KISS-ICP pipeline
-        const auto &[frame, keypoints] = kiss_icp_->RegisterFrame(points, timestamps);
+        const auto &[frame, keypoints] = kiss_icp_->RegisterFrame(points, timestamps, external_guess);
 
         // Extract the last KISS-ICP pose, ego-centric to the LiDAR
         const Sophus::SE3d kiss_pose = kiss_icp_->pose();
