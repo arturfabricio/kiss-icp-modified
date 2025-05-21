@@ -45,7 +45,7 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     const double sigma = adaptive_threshold_.ComputeThreshold();
 
     // Compute initial_guess for ICP
-    std::cout << last_delta_.matrix() << std::endl;
+    // std::cout << last_delta_.matrix() << std::endl;
 
     const auto initial_guess = last_pose_ * last_delta_;
 
@@ -59,7 +59,7 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     // Compute the difference between the prediction and the actual estimate
     const auto model_deviation = initial_guess.inverse() * new_pose;
 
-    std::cout << "model_deviation: " << model_deviation.matrix() << std::endl;
+    // std::cout << "model_deviation: " << model_deviation.matrix() << std::endl;
 
     // Update step: threshold, local map, delta, and the last pose
     adaptive_threshold_.UpdateModelDeviation(model_deviation);
