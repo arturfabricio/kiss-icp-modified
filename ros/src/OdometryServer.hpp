@@ -49,14 +49,10 @@ public:
     OdometryServer() = delete;
     explicit OdometryServer(const rclcpp::NodeOptions &options);
 
-    
-
 private:
-    /// Register new frame
-    void RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg);
-
+    /// THis substitutes register frame
     void syncCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg,
-                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg);
+                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr &cloud_msg);
 
     /// Stream the estimated pose to ROS
     void PublishOdometry(const Sophus::SE3d &kiss_pose, const std_msgs::msg::Header &header);

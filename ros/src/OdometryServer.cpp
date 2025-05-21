@@ -109,11 +109,6 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     // Construct the main KISS-ICP odometry node
     kiss_icp_ = std::make_unique<kiss_icp::pipeline::KissICP>(config);
 
-    // Initialize subscribers
-    pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-        "pointcloud_topic", rclcpp::SensorDataQoS(),
-        std::bind(&OdometryServer::RegisterFrame, this, std::placeholders::_1));
-
     pose_sub_.subscribe(this, "pose_topic");
     cloud_sub_.subscribe(this, "pointcloud_topic");
 
@@ -140,29 +135,27 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
 }
 
 void OdometryServer::syncCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg,
-                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud_msg)
+                      const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg)
     {
+        const auto cloud_frame_id = msg->header.frame_id;
+        const auto points = PointCloud2ToEigen(msg);
+        const auto timestamps = GetTimestamps(msg); 
+        
+        // Register frame, main entry point to KISS-ICP pipeline
+        const auto &[frame, keypoints] = kiss_icp_->RegisterFrame(points, timestamps);
+
+        // Extract the last KISS-ICP pose, ego-centric to the LiDAR
+        const Sophus::SE3d kiss_pose = kiss_icp_->pose();
+
+        // Spit the current estimated pose to ROS msgs handling the desired target frame
+        PublishOdometry(kiss_pose, msg->header);
+        // Publishing these clouds is a bit costly, so do it only if we are debugging
+        if (publish_debug_clouds_) {
+            PublishClouds(frame, keypoints, msg->header);
+        }
+
         std::cout << "Received pose and point cloud message at time: " << pose_msg->header.stamp.sec << "." << pose_msg->header.stamp.nanosec << std::endl;
     }
-
-void OdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg) {
-    const auto cloud_frame_id = msg->header.frame_id;
-    const auto points = PointCloud2ToEigen(msg);
-    const auto timestamps = GetTimestamps(msg); 
-    
-    // Register frame, main entry point to KISS-ICP pipeline
-    const auto &[frame, keypoints] = kiss_icp_->RegisterFrame(points, timestamps);
-
-    // Extract the last KISS-ICP pose, ego-centric to the LiDAR
-    const Sophus::SE3d kiss_pose = kiss_icp_->pose();
-
-    // Spit the current estimated pose to ROS msgs handling the desired target frame
-    PublishOdometry(kiss_pose, msg->header);
-    // Publishing these clouds is a bit costly, so do it only if we are debugging
-    if (publish_debug_clouds_) {
-        PublishClouds(frame, keypoints, msg->header);
-    }
-}
 
 void OdometryServer::PublishOdometry(const Sophus::SE3d &kiss_pose,
                                      const std_msgs::msg::Header &header) {
