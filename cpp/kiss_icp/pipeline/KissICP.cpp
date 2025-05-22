@@ -64,7 +64,7 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     // Run ICP
     const auto new_pose = registration_.AlignPointsToMap(source,         // frame
                                                          local_map_,     // voxel_map
-                                                         external_guess,  // initial_guess
+                                                         external_guess,  // external_guess
                                                          3.0 * sigma,    // max_correspondence_dist
                                                          sigma);         // kernel
     
@@ -98,8 +98,8 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
 
 KissICP::Vector3dVectorTuple KissICP::Voxelize(const std::vector<Eigen::Vector3d> &frame) const {
     const auto voxel_size = config_.voxel_size;
-    const auto frame_downsample = kiss_icp::VoxelDownsample(frame, voxel_size * 0.5);
-    const auto source = kiss_icp::VoxelDownsample(frame_downsample, voxel_size * 1.5);
+    const auto frame_downsample = kiss_icp::VoxelDownsample(frame, voxel_size * 0.1);
+    const auto source = kiss_icp::VoxelDownsample(frame_downsample, voxel_size * 1.0);
     return {source, frame_downsample};
 }
 
