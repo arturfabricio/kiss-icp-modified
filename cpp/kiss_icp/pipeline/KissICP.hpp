@@ -87,6 +87,7 @@ public:
 private:
     Sophus::SE3d last_pose_;
     Sophus::SE3d last_delta_;
+    bool is_first_frame_ = true;
 
     // KISS-ICP pipeline modules
     KISSConfig config_;
