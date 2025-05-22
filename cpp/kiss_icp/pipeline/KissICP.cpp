@@ -40,7 +40,7 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     if (is_first_frame_) {
         last_pose_ = external_guess;
         is_first_frame_ = false;
-        std::cout << "[KissICP] Initialized last_pose_ from external guess." << std::endl;
+        // std::cout << "[KissICP] Initialized last_pose_ from external guess." << std::endl;
     }
 
     // Preprocess the input cloud
@@ -55,11 +55,11 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     // Compute initial_guess for ICP
     // const auto initial_guess = last_pose_ * last_delta_;
 
-    std::cout << "New iteration" << std::endl;
+    // std::cout << "New iteration" << std::endl;
 
-    std::cout << "Sigma: " << sigma << std::endl;
-    std::cout << "External guess: " << std::endl;
-    std::cout << external_guess.matrix() << std::endl;
+    // std::cout << "Sigma: " << sigma << std::endl;
+    // std::cout << "External guess: " << std::endl;
+    // std::cout << external_guess.matrix() << std::endl;
 
     // Run ICP
     const auto new_pose = registration_.AlignPointsToMap(source,         // frame
@@ -68,16 +68,16 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
                                                          1.0 * sigma,    // max_correspondence_dist
                                                          sigma);         // kernel
     
-    std::cout << "new_pose: " << std::endl;
-    std::cout << new_pose.matrix() << std::endl;
+    // std::cout << "new_pose: " << std::endl;
+    // std::cout << new_pose.matrix() << std::endl;
 
     // Compute the difference between the prediction and the actual estimate
     const auto model_deviation = external_guess.inverse() * new_pose;
-    std::cout << "Model deviation: " << std::endl;
-    std::cout << model_deviation.matrix() << std::endl;
+    // std::cout << "Model deviation: " << std::endl;
+    // std::cout << model_deviation.matrix() << std::endl;
 
-    std::cout << "last_pose_: " << std::endl;
-    std::cout << last_pose_.matrix() << std::endl;
+    // std::cout << "last_pose_: " << std::endl;
+    // std::cout << last_pose_.matrix() << std::endl;
 
     // Update step: threshold, local map, delta, and the last pose
     adaptive_threshold_.UpdateModelDeviation(model_deviation);
@@ -85,11 +85,11 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     last_delta_ = last_pose_.inverse() * new_pose;
     last_pose_ = new_pose;
 
-    std::cout << "last_delta_: " << std::endl;
-    std::cout << last_delta_.matrix() << std::endl;
+    // std::cout << "last_delta_: " << std::endl;
+    // std::cout << last_delta_.matrix() << std::endl;
     
-    const double sigma2 = adaptive_threshold_.ComputeThreshold();
-    std::cout << "Sigma2: " << sigma2 << std::endl;
+    // const double sigma2 = adaptive_threshold_.ComputeThreshold();
+    // std::cout << "Sigma2: " << sigma2 << std::endl;
 
     // Return the (deskew) input raw scan (preprocessed_frame) and the points used for registration
     // (source)
